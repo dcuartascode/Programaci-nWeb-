@@ -4,71 +4,55 @@ const generarBtn = document.getElementById('generarBtn');
 const reiniciarBtn = document.getElementById('reiniciarBtn');
 const loader = document.getElementById('loader');
 const resultadosContainer = document.getElementById('resultadosContainer');
-const tablaX = document.getElementById('tablaX');
+const tablaCoeficientes = document.getElementById('tablaCoeficientes');
 const tablaY = document.getElementById('tablaY');
 const tablaNormalizada = document.getElementById('tablaNormalizada');
+const tablaPromedio01 = document.getElementById('tablaPromedio01');
+const tablaPromedio005 = document.getElementById('tablaPromedio005');
 const xMinElement = document.getElementById('xMin');
 const xMaxElement = document.getElementById('xMax');
 const yMinElement = document.getElementById('yMin');
 const yMaxElement = document.getElementById('yMax');
 
-// Variables para almacenar los gráficos
 let graficoNormalizado;
 let graficoPromedio01;
 let graficoPromedio005;
 let graficoCombinado;
 
-// Cargar el último factor utilizado desde LocalStorage
-document.addEventListener('DOMContentLoaded', () => {
-  const ultimoFactor = localStorage.getItem('factorMultiplicacion');
-  if (ultimoFactor) {
-    factorInput.value = ultimoFactor;
-  }
-});
-
-// Event Listeners
 generarBtn.addEventListener('click', generarDatos);
 reiniciarBtn.addEventListener('click', reiniciar);
 
 function generarDatos() {
-  // Validar entrada
+
   const factor = parseFloat(factorInput.value);
   if (isNaN(factor)) {
     alert('Por favor, ingrese un número válido para el factor de multiplicación.');
     return;
   }
 
-  // Guardar factor en LocalStorage
-  localStorage.setItem('factorMultiplicacion', factor);
-
-  // Mostrar loader y ocultar resultados
   loader.style.display = 'block';
   resultadosContainer.classList.add('hidden');
 
-  // Simular proceso de cálculo
   setTimeout(() => {
     try {
-      // Generar datos X aleatorios
-      const datosX = generarDatosX(factor);
-      mostrarTablaX(datosX);
+      const coeficientes = generarCoeficientes(factor);
+      mostrarTablaCoeficientes(coeficientes);
 
-      // Generar datos Y calculados
-      const datosY = generarDatosY(datosX);
+      const datosY = generarDatosY360(coeficientes);
       mostrarTablaY(datosY);
 
-      // Procesar y normalizar datos
-      const {valoresXY, xMin, xMax, yMin, yMax} = procesarDatos(datosX, datosY);
+      const {valoresXY, xMin, xMax, yMin, yMax} = procesarDatos(datosY);
       mostrarResumen(xMin, xMax, yMin, yMax);
       mostrarTablaNormalizada(valoresXY);
 
-      // Generar promedios por rangos
       const promedios01 = generarPromediosPorRango(valoresXY, 0.1);
       const promedios005 = generarPromediosPorRango(valoresXY, 0.05);
+   
+      mostrarTablaPromedios(promedios01, tablaPromedio01);
+      mostrarTablaPromedios(promedios005, tablaPromedio005);
 
-      // Crear gráficos
       crearGraficos(valoresXY, promedios01, promedios005);
 
-      // Ocultar loader y mostrar resultados
       loader.style.display = 'none';
       resultadosContainer.classList.remove('hidden');
     } catch (error) {
@@ -79,99 +63,95 @@ function generarDatos() {
   }, 1000);
 }
 
-function generarDatosX(factor) {
-  // Generar matriz 3x7 de valores X aleatorios
-  const datos = [];
+function generarCoeficientes(factor) {
+  const coeficientes = [];
   for (let i = 0; i < 3; i++) {
     const fila = [];
     for (let j = 0; j < 7; j++) {
-      // (ALEATORIO()-ALEATORIO())*factor
       const valor = (Math.random() - Math.random()) * factor;
       fila.push(valor);
     }
-    datos.push(fila);
+    coeficientes.push(fila);
   }
-  return datos;
+  return coeficientes;
 }
 
-function mostrarTablaX(datos) {
-  const tbody = tablaX.querySelector('tbody');
+function mostrarTablaCoeficientes(coeficientes) {
+  const tbody = tablaCoeficientes.querySelector('tbody');
   tbody.innerHTML = '';
 
-  datos.forEach(fila => {
+  coeficientes.forEach(fila => {
     const tr = document.createElement('tr');
     fila.forEach(valor => {
       const td = document.createElement('td');
-      td.textContent = valor.toFixed(4);
+      td.textContent = valor.toFixed(6);
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
   });
 }
 
-function generarDatosY(datosX) {
-  // B5*SENO(RADIANES(B6*X+B7))
+function generarDatosY360(coeficientes) {
   const datosY = [];
-
-  for (let col = 0; col < 7; col++) {
-    const b5 = datosX[0][col]; // Valor en la fila 1 (índice 0)
-    const b6 = datosX[1][col]; // Valor en la fila 2 (índice 1)
-    const b7 = datosX[2][col]; // Valor en la fila 3 (índice 2)
-
-    // Ahora calculamos Y para cada fila usando los valores de la columna
-    const filaY = [];
-    for (let fila = 0; fila < 3; fila++) {
-      const x = datosX[fila][col];
-      // B5*SENO(RADIANES(B6*X+B7))
+  
+  for (let i = 0; i < 360; i++) {
+    const fila = [];
+    let sumatoria = 0;
+    
+    for (let j = 0; j < 7; j++) {
+      const b5 = coeficientes[0][j]; // Primera fila de coeficientes
+      const b6 = coeficientes[1][j]; // Segunda fila de coeficientes  
+      const b7 = coeficientes[2][j]; // Tercera fila de coeficientes
+    
+      const x = i;
+      
       const y = b5 * Math.sin((b6 * x + b7) * Math.PI / 180);
-      filaY.push(y);
+      
+      fila.push(y);
+      sumatoria += y;
     }
-    datosY.push(filaY);
+    
+    fila.push(sumatoria); // Agregar sumatoria como columna final
+    datosY.push(fila);
   }
-
-  // Transponer los datos para que sean 3x7 (filas x columnas)
-  const datosTranspuestos = [[], [], []];
-  for (let col = 0; col < 7; col++) {
-    for (let fila = 0; fila < 3; fila++) {
-      datosTranspuestos[fila][col] = datosY[col][fila];
-    }
-  }
-
-  return datosTranspuestos;
+  
+  return datosY;
 }
 
-function mostrarTablaY(datos) {
+function mostrarTablaY(datosY) {
   const tbody = tablaY.querySelector('tbody');
   tbody.innerHTML = '';
 
-  datos.forEach(fila => {
+  datosY.forEach(fila => {
     const tr = document.createElement('tr');
-    fila.forEach(valor => {
+    fila.forEach((valor, index) => {
       const td = document.createElement('td');
-      td.textContent = valor.toFixed(4);
+      if (index === fila.length - 1) {
+        // Última columna es la sumatoria
+        td.textContent = valor.toFixed(8);
+        td.className = 'font-semibold bg-yellow-50';
+      } else {
+        td.textContent = valor.toFixed(6);
+      }
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
   });
 }
 
-function procesarDatos(datosX, datosY) {
-  // Aplanar los datos a una lista de pares (x,y)
+function procesarDatos(datosY) {
   const valoresXY = [];
-  let allX = [];
-  let allY = [];
+  const allX = [];
+  const allY = [];
 
-  for (let i = 0; i < datosX.length; i++) {
-    for (let j = 0; j < datosX[i].length; j++) {
-      const x = datosX[i][j];
-      const y = datosY[i][j];
-      allX.push(x);
-      allY.push(y);
-      valoresXY.push({ x, y });
-    }
+  for (let i = 0; i < datosY.length; i++) {
+    const x = i; 
+    const y = datosY[i][datosY[i].length - 1]; 
+    allX.push(x);
+    allY.push(y);
+    valoresXY.push({ x, y });
   }
 
-  // Encontrar mínimos y máximos
   const xMin = Math.min(...allX);
   const xMax = Math.max(...allX);
   const yMin = Math.min(...allY);
@@ -193,8 +173,8 @@ function procesarDatos(datosX, datosY) {
 }
 
 function mostrarResumen(xMin, xMax, yMin, yMax) {
-  xMinElement.textContent = xMin.toFixed(4);
-  xMaxElement.textContent = xMax.toFixed(4);
+  xMinElement.textContent = xMin.toFixed(0);
+  xMaxElement.textContent = xMax.toFixed(0);
   yMinElement.textContent = yMin.toFixed(4);
   yMaxElement.textContent = yMax.toFixed(4);
 }
@@ -207,11 +187,11 @@ function mostrarTablaNormalizada(valoresXY) {
     const tr = document.createElement('tr');
     
     const tdX = document.createElement('td');
-    tdX.textContent = punto.xNorm.toFixed(4);
+    tdX.textContent = punto.xNorm.toFixed(8);
     tr.appendChild(tdX);
     
     const tdY = document.createElement('td');
-    tdY.textContent = punto.yNorm.toFixed(4);
+    tdY.textContent = punto.yNorm.toFixed(8);
     tr.appendChild(tdY);
     
     tbody.appendChild(tr);
@@ -219,31 +199,27 @@ function mostrarTablaNormalizada(valoresXY) {
 }
 
 function generarPromediosPorRango(valoresXY, anchoRango) {
-  // Ordenar los puntos por xNorm
-  const puntos = [...valoresXY].sort((a, b) => a.xNorm - b.xNorm);
-  
   const promedios = [];
   let inicio = 0;
   
   while (inicio < 1) {
-    const fin = inicio + anchoRango;
-    const puntosEnRango = puntos.filter(p => p.xNorm >= inicio && p.xNorm < fin);
+    const fin = Math.min(inicio + anchoRango, 1);
+    const puntosEnRango = valoresXY.filter(p => p.xNorm >= inicio && p.xNorm < fin);
     
+    let promY = 0;
     if (puntosEnRango.length > 0) {
       const sumY = puntosEnRango.reduce((sum, p) => sum + p.yNorm, 0);
-      const promY = sumY / puntosEnRango.length;
-      const puntoMedio = inicio + anchoRango/2;
-      
-      promedios.push({
-        x: puntoMedio,
-        y: promY
-      });
-    } else {
-      promedios.push({
-        x: inicio + anchoRango/2,
-        y: 0
-      });
+      promY = sumY / puntosEnRango.length;
     }
+    
+    const puntoMedio = inicio + anchoRango/2;
+    
+    promedios.push({
+      xa: inicio,
+      xb: fin,
+      xCentro: puntoMedio,
+      yPromedio: promY
+    });
     
     inicio = fin;
   }
@@ -251,8 +227,34 @@ function generarPromediosPorRango(valoresXY, anchoRango) {
   return promedios;
 }
 
+function mostrarTablaPromedios(promedios, tabla) {
+  const tbody = tabla.querySelector('tbody');
+  tbody.innerHTML = '';
+
+  promedios.forEach(promedio => {
+    const tr = document.createElement('tr');
+    
+    const tdXa = document.createElement('td');
+    tdXa.textContent = promedio.xa.toFixed(2);
+    tr.appendChild(tdXa);
+    
+    const tdXb = document.createElement('td');
+    tdXb.textContent = promedio.xb.toFixed(2);
+    tr.appendChild(tdXb);
+    
+    const tdXCentro = document.createElement('td');
+    tdXCentro.textContent = promedio.xCentro.toFixed(3);
+    tr.appendChild(tdXCentro);
+    
+    const tdYPromedio = document.createElement('td');
+    tdYPromedio.textContent = promedio.yPromedio.toFixed(8);
+    tr.appendChild(tdYPromedio);
+    
+    tbody.appendChild(tr);
+  });
+}
+
 function crearGraficos(valoresXY, promedios01, promedios005) {
-  // Destruir gráficos anteriores si existen
   if (graficoNormalizado) graficoNormalizado.destroy();
   if (graficoPromedio01) graficoPromedio01.destroy();
   if (graficoPromedio005) graficoPromedio005.destroy();
@@ -260,19 +262,18 @@ function crearGraficos(valoresXY, promedios01, promedios005) {
   
   // 1. Gráfico de valores normalizados
   const ctxNorm = document.getElementById('graficoNormalizado').getContext('2d');
-  // Es crucial ordenar los datos por X antes de graficar la línea.
   const datosOrdenados = [...valoresXY].sort((a, b) => a.xNorm - b.xNorm);
   graficoNormalizado = new Chart(ctxNorm, {
-    type: 'line', // Cambia el tipo a 'line'
+    type: 'line',
     data: {
       datasets: [{
         label: 'Y normalizado vs X normalizado',
         data: datosOrdenados.map(p => ({ x: p.xNorm, y: p.yNorm })),
-        borderColor: 'rgba(54, 162, 235, 1)', // Color de la línea
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        fill: false, // No rellena el área bajo la línea
-        tension: 0.1, // Suaviza la línea
-        pointRadius: 3 // Define el radio de los puntos
+        borderColor: 'rgba(54, 162, 235, 1)',
+        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+        fill: false,
+        tension: 1,
+        pointRadius: 1
       }]
     },
     options: {
@@ -280,7 +281,7 @@ function crearGraficos(valoresXY, promedios01, promedios005) {
       maintainAspectRatio: false,
       scales: {
         x: {
-          type: 'linear', // Es importante usar un tipo 'linear' para datos no categóricos
+          type: 'linear',
           position: 'bottom',
           title: {
             display: true,
@@ -302,12 +303,14 @@ function crearGraficos(valoresXY, promedios01, promedios005) {
   graficoPromedio01 = new Chart(ctx01, {
     type: 'line',
     data: {
-      labels: promedios01.map(p => p.x.toFixed(2)),
+      labels: promedios01.map(p => p.xCentro.toFixed(2)),
       datasets: [{
         label: 'Promedio Y (rangos de 0.1)',
-        data: promedios01.map(p => p.y),
+        data: promedios01.map(p => p.yPromedio),
         fill: false,
+        tension: 1,
         borderColor: 'rgba(255, 99, 132, 1)',
+        backgroundColor: 'rgba(255, 99, 132, 0.1)',
         tension: 0.1
       }]
     },
@@ -316,7 +319,7 @@ function crearGraficos(valoresXY, promedios01, promedios005) {
       maintainAspectRatio: false,
       scales: {
         y: {
-          beginAtZero: true
+          beginAtZero: false
         }
       }
     }
@@ -327,12 +330,14 @@ function crearGraficos(valoresXY, promedios01, promedios005) {
   graficoPromedio005 = new Chart(ctx005, {
     type: 'line',
     data: {
-      labels: promedios005.map(p => p.x.toFixed(2)),
+      labels: promedios005.map(p => p.xCentro.toFixed(2)),
       datasets: [{
         label: 'Promedio Y (rangos de 0.05)',
-        data: promedios005.map(p => p.y),
+        data: promedios005.map(p => p.yPromedio),
         fill: false,
+        tension: 1,
         borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.1)',
         tension: 0.1
       }]
     },
@@ -341,7 +346,7 @@ function crearGraficos(valoresXY, promedios01, promedios005) {
       maintainAspectRatio: false,
       scales: {
         y: {
-          beginAtZero: true
+          beginAtZero: false
         }
       }
     }
@@ -351,35 +356,37 @@ function crearGraficos(valoresXY, promedios01, promedios005) {
   const ctxCombinado = document.getElementById('graficoCombinado').getContext('2d');
   const datosOrdenadosCombinado = [...valoresXY].sort((a, b) => a.xNorm - b.xNorm);
   graficoCombinado = new Chart(ctxCombinado, {
-    type: 'line', // La línea que debes cambiar
+    type: 'line',
     data: {
       datasets: [
         {
           label: 'Valores normalizados',
           data: datosOrdenadosCombinado.map(p => ({ x: p.xNorm, y: p.yNorm })),
           borderColor: 'rgba(54, 162, 235, 0.6)',
-          backgroundColor: 'rgba(54, 162, 235, 0.3)',
-          pointRadius: 3,
+          backgroundColor: 'rgba(54, 162, 235, 0.1)',
+          pointRadius: 1,
           fill: false,
-          tension: 0.1,
-          type: 'line' // Asegúrate de que este también sea 'line'
+          tension: 1,
+          type: 'line' 
         },
         {
           label: 'Promedio (rango 0.1)',
-          data: promedios01,
+          data: promedios01.map(p => ({ x: p.xCentro, y: p.yPromedio })),
           fill: false,
           borderColor: 'rgba(255, 99, 132, 1)',
-          tension: 0.1,
-          pointRadius: 5,
+          backgroundColor: 'rgba(255, 99, 132, 0.1)',
+          tension: 1,
+          pointRadius: 3,
           type: 'line'
         },
         {
           label: 'Promedio (rango 0.05)',
-          data: promedios005,
+          data: promedios005.map(p => ({ x: p.xCentro, y: p.yPromedio })),
           fill: false,
           borderColor: 'rgba(75, 192, 192, 1)',
-          tension: 0.1,
-          pointRadius: 5,
+          backgroundColor: 'rgba(75, 192, 192, 0.1)',
+          tension: 1,
+          pointRadius: 2,
           type: 'line'
         }
       ]
@@ -390,10 +397,18 @@ function crearGraficos(valoresXY, promedios01, promedios005) {
       scales: {
         x: {
           type: 'linear',
-          position: 'bottom'
+          position: 'bottom',
+          title: {
+            display: true,
+            text: 'X Normalizado'
+          }
         },
         y: {
-          beginAtZero: true
+          beginAtZero: false,
+          title: {
+            display: true,
+            text: 'Y Normalizado'
+          }
         }
       }
     }
@@ -402,9 +417,11 @@ function crearGraficos(valoresXY, promedios01, promedios005) {
 
 function reiniciar() {
   // Limpiar tablas
-  tablaX.querySelector('tbody').innerHTML = '';
+  tablaCoeficientes.querySelector('tbody').innerHTML = '';
   tablaY.querySelector('tbody').innerHTML = '';
   tablaNormalizada.querySelector('tbody').innerHTML = '';
+  tablaPromedio01.querySelector('tbody').innerHTML = '';
+  tablaPromedio005.querySelector('tbody').innerHTML = '';
   
   // Limpiar resumen
   xMinElement.textContent = '-';

@@ -6,7 +6,7 @@
   <title>Agrupamiento Por Rangos</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="estilos.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
@@ -52,34 +52,30 @@
     <div id="loader" class="loader"></div>
 
     <div id="resultadosContainer" class="hidden">
-      <!-- Sección 1: Tabla de datos X aleatorios -->
       <div class="mb-8">
-        <h2 class="text-xl font-semibold mb-3 text-gray-800 border-b pb-2">1. Datos X Aleatorios</h2>
+        <h2 class="text-xl font-semibold mb-3 text-gray-800 border-b pb-2">1. Coeficientes</h2>
         <div class="overflow-x-auto">
-          <table id="tablaX" class="min-w-full">
+          <table id="tablaCoeficientes" class="min-w-full">
             <thead>
               <tr>
-                <th>X1</th>
-                <th>X2</th>
-                <th>X3</th>
-                <th>X4</th>
-                <th>X5</th>
-                <th>X6</th>
-                <th>X7</th>
+                <th>B</th>
+                <th>C</th>
+                <th>D</th>
+                <th>E</th>
+                <th>F</th>
+                <th>G</th>
+                <th>H</th>
               </tr>
             </thead>
             <tbody>
-              <!-- Filas se generarán dinámicamente -->
             </tbody>
           </table>
         </div>
       </div>
-
-      <!-- Sección 2: Tabla de datos Y calculados -->
       <div class="mb-8">
-        <h2 class="text-xl font-semibold mb-3 text-gray-800 border-b pb-2">2. Datos Y Calculados</h2>
-        <div class="overflow-x-auto">
-          <table id="tablaY" class="min-w-full">
+        <h2 class="text-xl font-semibold mb-3 text-gray-800 border-b pb-2">2. Datos Y Calculados (360 filas)</h2>
+        <div class="table-scroll">
+          <table id="tablaY" class="min-w-full text-xs">
             <thead>
               <tr>
                 <th>Y1</th>
@@ -89,16 +85,14 @@
                 <th>Y5</th>
                 <th>Y6</th>
                 <th>Y7</th>
+                <th>Y Sumatoria</th>
               </tr>
             </thead>
             <tbody>
-              <!-- Filas se generarán dinámicamente -->
             </tbody>
           </table>
         </div>
       </div>
-
-      <!-- Sección 3: Resumen y datos normalizados -->
       <div class="mb-8">
         <h2 class="text-xl font-semibold mb-3 text-gray-800 border-b pb-2">3. Resumen y Datos Normalizados</h2>
         
@@ -121,25 +115,62 @@
           </div>
         </div>
 
-
-        <div class="overflow-x-auto">
-          <table id="tablaNormalizada" class="min-w-full">
+        <div class="table-scroll">
+          <table id="tablaNormalizada" class="min-w-full text-xs">
             <thead>
               <tr>
-                <th>X Norm.</th>
-                <th>Y Norm.</th>
+                <th>X normalizado</th>
+                <th>Y normalizado</th>
               </tr>
             </thead>
             <tbody>
-              <!-- Filas se generarán dinámicamente -->
             </tbody>
           </table>
         </div>
       </div>
-
-      <!-- Sección 4: Gráficos -->
       <div class="mb-8">
-        <h2 class="text-xl font-semibold mb-3 text-gray-800 border-b pb-2">4. Visualizaciones</h2>
+        <h2 class="text-xl font-semibold mb-3 text-gray-800 border-b pb-2">4. Promedios por Rangos</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-lg font-medium mb-2">Promedio Y por rangos de X (ancho 0.1)</h3>
+            <div class="table-scroll">
+              <table id="tablaPromedio01" class="min-w-full text-xs">
+                <thead>
+                  <tr>
+                    <th>Xa</th>
+                    <th>Xb</th>
+                    <th>X centro</th>
+                    <th>Y promedio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-lg font-medium mb-2">Promedio Y por rangos de X (ancho 0.05)</h3>
+            <div class="table-scroll">
+              <table id="tablaPromedio005" class="min-w-full text-xs">
+                <thead>
+                  <tr>
+                    <th>Xa</th>
+                    <th>Xb</th>
+                    <th>X centro</th>
+                    <th>Y promedio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h2 class="text-xl font-semibold mb-3 text-gray-800 border-b pb-2">5. Visualizaciones</h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
